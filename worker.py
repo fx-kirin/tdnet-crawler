@@ -75,6 +75,8 @@ def record_data(session, cur, conn, current_date, pdf_dir, xbrl_dir, soup):
                         interpreter.process_page(page)
                 except pdfminer.pdfdocument.PDFTextExtractionNotAllowed:
                     logging.warn('Text extraction is not allowed. %s'%(item_id))
+                except pdfminer.pdfdocument.PDFEncryptionError:
+                    logging.warn('Text extraction couldnj\t be handled. %s'%(item_id))
                     
                 content = outfp.getvalue()
                 outfp.close()
