@@ -17,7 +17,6 @@ import fire
 import datetime
 import time
 import logging
-import magic
 from io import StringIO, BytesIO
 from mkdir_p import mkdir_p
 from contextlib import closing
