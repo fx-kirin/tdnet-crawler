@@ -34,9 +34,12 @@ def record_data(session, cur, conn, current_date, pdf_dir, xbrl_dir, soup):
         trs = soup.find(id='main-list-table').find_all('tr')
         for tr in trs:
             tds = tr.find_all('td')
+            is_found = tds[3].find('a')
+            if not is_found:
+                continue
             pdf = tds[3].find('a').get('href')
             item_id = pdf[:-4]
-            query = 'SELECT count(*) FROM td_net WHERE item_id=%s;'%(item_id)
+            query = 'SELECT count(*) FROM td_net WHERE item_id="%s";'%(item_id)
             is_found = cur.execute(query).fetchone()[0]
             if is_found == 0:
                 tmp = tds[0].text
@@ -58,7 +61,7 @@ def record_data(session, cur, conn, current_date, pdf_dir, xbrl_dir, soup):
                         result = session.get('https://www.release.tdnet.info/inbs/%s'%(xbrl))
                         time.sleep(0.5)
                         f.write(result.content)
-                xbrl = '%s/%s'%(xbrl_dir, xbrl)
+                    xbrl = '%s/%s'%(xbrl_dir, xbrl)
                 security = tds[5].text.strip()
                 refresh_info = tds[6].text.strip()
                 
@@ -88,7 +91,7 @@ def record_data(session, cur, conn, current_date, pdf_dir, xbrl_dir, soup):
                     INSERT INTO td_net(
                         date, item_id, stock_code, stock_code_long,
                         company_name, title, content, xbrl, pdf, security, refresh_info)
-                    VALUES("%s", "%s", "%s", "%s", "%s", '%s', "%s", "%s", "%s", "%s", "%s")
+                    VALUES("%s", "%s", "%s", "%s", "%s", "%s", "%s", "%s", "%s", "%s", "%s")
                 '''%(date, item_id, stock_code, stock_code_long, company_name, title, 
                     content.decode('utf8'), xbrl, pdf, security, refresh_info)
                 try:
@@ -100,9 +103,10 @@ def record_data(session, cur, conn, current_date, pdf_dir, xbrl_dir, soup):
                         INSERT INTO td_net(
                             date, item_id, stock_code, stock_code_long,
                             company_name, title, content, xbrl, pdf, security, refresh_info)
-                        VALUES("%s", "%s", "%s", "%s", "%s", '%s', "%s", "%s", "%s", "%s", "%s")
+                        VALUES("%s", "%s", "%s", "%s", "%s", "%s", "%s", "%s", "%s", "%s", "%s")
                     '''%(date, item_id, stock_code, stock_code_long, company_name, title, 
                         content.decode('utf8'), xbrl, pdf, security, refresh_info)
+                    cur.execute(query)
                 conn.commit()
 
 def main(date_range=1):
