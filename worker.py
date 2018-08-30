@@ -93,7 +93,7 @@ def record_data(session, cur, conn, current_date, pdf_dir, xbrl_dir, soup):
                     content.decode('utf8'), xbrl, pdf, security, refresh_info)
                 try:
                     cur.execute(query)
-                except sqlite3.OperationalError:
+                except (sqlite3.OperationalError, ValueError):
                     logging.warn('Encoding Problem on %s'%(item_id))
                     content = ''
                     query = '''
@@ -159,7 +159,6 @@ def main(date_range=1):
                     time.sleep(0.5)
                     soup = BeautifulSoup(result.content, 'lxml')
                     record_data(session, cur, conn, current_date, pdf_dir, xbrl_dir, soup)
-        conn.commit()
 
 if __name__ == "__main__":
     logging.basicConfig(format='%(asctime)s|%(threadName)s|%(levelname)s : %(message)s', level=logging.INFO)
