@@ -138,7 +138,7 @@ def main(date_range=1):
         cur.execute(query)
         
         now = datetime.datetime.now()
-        start_date = datetime.datetime(now.year, now.month, now.day) - datetime.timedelta(days=1)
+        start_date = datetime.datetime(now.year, now.month, now.day)
         current_date = start_date
         for i in range(date_range):
             current_date -= datetime.timedelta(days=1)
