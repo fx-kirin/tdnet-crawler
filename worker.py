@@ -31,7 +31,6 @@ OUTPUT_DIR = os.path.expanduser('~/tdnet_data/')
 
 def record_data(session, cur, conn, current_date, pdf_dir, xbrl_dir, soup):
     if soup.find(id='pager-box-top'):
-        page_size = len(soup.find(id='pager-box-top').find_all('div')) - 3
         trs = soup.find(id='main-list-table').find_all('tr')
         for tr in trs:
             tds = tr.find_all('td')
@@ -135,6 +134,7 @@ def main(date_range=1):
             result = session.get('https://www.release.tdnet.info/inbs/I_list_001_%s.html'%(datestring))
             time.sleep(0.5)
             soup = BeautifulSoup(result.content, 'lxml')
+            page_size = len(soup.find(id='pager-box-top').find_all('div')) - 3
             record_data(session, cur, conn, current_date, pdf_dir, xbrl_dir, soup)
             for a in range(page_size - 1):
                 result = session.get('https://www.release.tdnet.info/inbs/I_list_0%02d_%s.html'%(a + 2, datestring))
