@@ -17,6 +17,7 @@ import fire
 import datetime
 import time
 import logging
+import magic
 from io import StringIO, BytesIO
 from mkdir_p import mkdir_p
 from contextlib import closing
@@ -50,6 +51,7 @@ def record_data(session, cur, conn, current_date, pdf_dir, xbrl_dir, soup):
                     time.sleep(0.5)
                     pdf_content = result.content
                     f.write(result.content)
+                pdf = '%s/%s.pdf'%(pdf_dir, item_id)
                 xbrl = tds[4].text.strip()
                 if xbrl != '':
                     xbrl = tds[4].find('a').get('href')
@@ -57,6 +59,7 @@ def record_data(session, cur, conn, current_date, pdf_dir, xbrl_dir, soup):
                         result = session.get('https://www.release.tdnet.info/inbs/%s'%(xbrl))
                         time.sleep(0.5)
                         f.write(result.content)
+                xbrl = '%s/%s'%(xbrl_dir, xbrl)
                 security = tds[5].text.strip()
                 refresh_info = tds[6].text.strip()
                 
@@ -89,7 +92,18 @@ def record_data(session, cur, conn, current_date, pdf_dir, xbrl_dir, soup):
                     VALUES("%s", "%s", "%s", "%s", "%s", '%s', "%s", "%s", "%s", "%s", "%s")
                 '''%(date, item_id, stock_code, stock_code_long, company_name, title, 
                     content.decode('utf8'), xbrl, pdf, security, refresh_info)
-                cur.execute(query)
+                try:
+                    cur.execute(query)
+                except sqlite3.OperationalError:
+                    logging.warn('Encoding Problem on %s'%(item_id))
+                    content = ''
+                    query = '''
+                        INSERT INTO td_net(
+                            date, item_id, stock_code, stock_code_long,
+                            company_name, title, content, xbrl, pdf, security, refresh_info)
+                        VALUES("%s", "%s", "%s", "%s", "%s", '%s', "%s", "%s", "%s", "%s", "%s")
+                    '''%(date, item_id, stock_code, stock_code_long, company_name, title, 
+                        content.decode('utf8'), xbrl, pdf, security, refresh_info)
                 conn.commit()
 
 def main(date_range=1):
@@ -98,11 +112,11 @@ def main(date_range=1):
     session.mount("http://", adapters)
     session.mount("https://", adapters)
     
-    pdf_dir = OUTPUT_DIR+'/pdf'
-    xbrl_dir = OUTPUT_DIR+'/xbrl'
+    pdf_root_dir = OUTPUT_DIR+'/pdf'
+    xbrl_root_dir = OUTPUT_DIR+'/xbrl'
     mkdir_p(OUTPUT_DIR)
-    mkdir_p(pdf_dir)
-    mkdir_p(xbrl_dir)
+    mkdir_p(pdf_root_dir)
+    mkdir_p(xbrl_root_dir)
     dbname = '%s/sqlite3.db'%(OUTPUT_DIR)
     with closing(sqlite3.connect(dbname)) as conn:
         cur = conn.cursor()
@@ -135,6 +149,10 @@ def main(date_range=1):
             time.sleep(0.5)
             soup = BeautifulSoup(result.content, 'lxml')
             page_size = len(soup.find(id='pager-box-top').find_all('div')) - 3
+            pdf_dir = pdf_root_dir + '/%s'%(datestring)
+            xbrl_dir = xbrl_root_dir + '/%s'%(datestring)
+            mkdir_p(pdf_dir)
+            mkdir_p(xbrl_dir)
             record_data(session, cur, conn, current_date, pdf_dir, xbrl_dir, soup)
             for a in range(page_size - 1):
                 result = session.get('https://www.release.tdnet.info/inbs/I_list_0%02d_%s.html'%(a + 2, datestring))
