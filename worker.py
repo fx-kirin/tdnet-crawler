@@ -75,7 +75,7 @@ def record_data(session, cur, conn, current_date, pdf_dir, xbrl_dir, soup):
                 except pdfminer.pdfdocument.PDFTextExtractionNotAllowed:
                     logging.warn('Text extraction is not allowed. %s'%(item_id))
                 except pdfminer.pdfdocument.PDFEncryptionError:
-                    logging.warn('Text extraction couldnj\t be handled. %s'%(item_id))
+                    logging.warn('Text extraction couldn\'t be handled. %s'%(item_id))
                     
                 content = outfp.getvalue()
                 outfp.close()
@@ -141,7 +141,7 @@ def main(date_range=1):
                 time.sleep(0.5)
                 soup = BeautifulSoup(result.content, 'lxml')
                 record_data(session, cur, conn, current_date, pdf_dir, xbrl_dir, soup)
-        cur.commit()
+        conn.commit()
 
 if __name__ == "__main__":
     logging.basicConfig(format='%(asctime)s|%(threadName)s|%(levelname)s : %(message)s', level=logging.INFO)
