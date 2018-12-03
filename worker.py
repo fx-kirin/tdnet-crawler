@@ -27,7 +27,7 @@ from pdfminer.pdfinterp import PDFResourceManager, PDFPageInterpreter
 from pdfminer.converter import TextConverter
 from pdfminer.pdfpage import PDFPage
 
-OUTPUT_DIR = os.path.expanduser('~/tdnet_data/')
+OUTPUT_DIR = '/media/tfnas/tdnet_data/'
 
 def record_data(session, cur, conn, current_date, pdf_dir, xbrl_dir, soup):
     if soup.find(id='pager-box-top'):
@@ -165,5 +165,10 @@ def main(date_range=1):
                     record_data(session, cur, conn, current_date, pdf_dir, xbrl_dir, soup)
 
 if __name__ == "__main__":
-    logging.basicConfig(format='%(asctime)s|%(threadName)s|%(levelname)s : %(message)s', level=logging.INFO)
+    import ktools
+    import stdlogging
+    
+    ktools.setup_logger(logfile='/tmp/%s.log'%(os.path.basename(__file__)), level=logging.INFO)
+    stdlogging.enable()
+    stderr = ktools.get_stderr_logger()
     fire.Fire(main)
